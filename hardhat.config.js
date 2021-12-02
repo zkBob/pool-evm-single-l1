@@ -2,6 +2,8 @@ require("@nomiclabs/hardhat-waffle");
 
 require('dotenv').config()
 
+
+
 // This is a sample Hardhat task. To learn how to create your own go to
 // https://hardhat.org/guides/create-task.html
 task("accounts", "Prints the list of accounts", async () => {
@@ -18,6 +20,43 @@ task("accounts", "Prints the list of accounts", async () => {
 /**
  * @type import('hardhat/config').HardhatUserConfig
  */
+
+const localDevnets = {
+  hardhat: {
+    accounts: {
+      mnemonic: "crazy appear raise time fashion kind pattern crazy device split escape wolf",
+      count: 3,
+    }
+  },
+  localhost: {
+    url: 'http://127.0.0.1:8545/'
+  },
+  docker: {
+    url: "http://ganache:8545",
+  }
+};
+
+
+const networks = typeof process.env.MNEMONIC === 'undefined' ? {} : {
+  xdai_testnet: {
+    url: 'http://104.200.30.151:8545/',
+    accounts: {
+      mnemonic: process.env.MNEMONIC,
+      count: 3
+    },
+    chainId: 0x66
+  },
+  sokol: {
+    url: 'https://sokol.poa.network/',
+    accounts: {
+      mnemonic: process.env.MNEMONIC,
+      count: 3
+    },
+    chainId: 77
+  }
+};
+
+
 module.exports = {
   solidity: {
     compilers: [
@@ -41,43 +80,6 @@ module.exports = {
       },
     ]
   },
-  networks: {
-    hardhat: {
-      mining: {
-        auto: true,
-        interval: 1
-      },
-      accounts: {
-        mnemonic: process.env.MNEMONIC,
-        count: 8,
-      }
-    },
-    xdai_testnet: {
-      url: 'http://104.200.30.151:8545/',
-      accounts: {
-        mnemonic: process.env.MNEMONIC,
-        count: 3
-      },
-      chainId: 0x66
-    },
-    sokol: {
-      url: 'https://sokol.poa.network/',
-      accounts: {
-        mnemonic: process.env.MNEMONIC,
-        count: 3
-      },
-      chainId: 77
-    },
-    ganache: {
-      url: 'http://127.0.0.1:8545/',
-      accounts: {
-        mnemonic: process.env.MNEMONIC,
-        count: 3
-      },
-    },
-    docker: {
-      url: "http://ganache:8545",
-    }
-  }
+  networks: {...localDevnets, ...networks},
 };
 
