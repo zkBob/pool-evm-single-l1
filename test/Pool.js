@@ -2,6 +2,7 @@ const { expect } = require("chai");
 const { ethers } = require("hardhat");
 const rand_bigint = require('random-bigint');
 const deploy = require("../scripts/deploy")
+const deploy_roundrobin = require("../scripts/deploy-rr")
 
 const Q = 21888242871839275222246405745257275088696311157297823662689037894645226208583n;
 
@@ -67,4 +68,34 @@ describe("Pool", async function() {
 
     });
 
+});
+
+describe("Round-Robin Auction", async function() {
+    it("Should deploy RoundRobin", async function () {
+
+        const [,, relayer1, relayer2, relayer3] = await ethers.getSigners();
+
+        const { operatorManager, RoundRobin } = await deploy_roundrobin();
+
+        console.log("Relayer-1: ", relayer1.address);
+        console.log("Relayer-2: ", relayer2.address);
+        console.log("Relayer-3: ", relayer3.address);
+
+        await operatorManager.setMaintenance(true);
+        await operatorManager.addOperator("REL-01", relayer1.address, "https://my.super.relayer.com/")
+        await operatorManager.addOperator("REL-02", relayer2.address, "https://not.bad.relayer.com/");
+        await operatorManager.addOperator("REL-03", relayer3.address, "https://the.worst.relayer.com/");
+        await operatorManager.setMaintenance(false);
+
+        await operatorManager.connect(relayer1).claim();
+        await operatorManager.connect(relayer2).claim();
+        await operatorManager.connect(relayer3).claim();
+
+        for (var i = 0; i < 9; i++) {
+            const curOp = await operatorManager.operator();
+            const curBn = await operatorManager.getBlockNumber();
+            console.log("Current operator: %s (bn = %d)", curOp, curBn);
+        }
+        
+    });
 });

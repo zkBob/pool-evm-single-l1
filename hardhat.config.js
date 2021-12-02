@@ -43,9 +43,13 @@ module.exports = {
   },
   networks: {
     hardhat: {
+      mining: {
+        auto: true,
+        interval: 1
+      },
       accounts: {
         mnemonic: process.env.MNEMONIC,
-        count: 3,
+        count: 8,
       }
     },
     xdai_testnet: {
