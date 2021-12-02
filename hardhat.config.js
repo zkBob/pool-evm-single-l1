@@ -23,9 +23,13 @@ task("accounts", "Prints the list of accounts", async () => {
 
 const localDevnets = {
   hardhat: {
+    mining: {
+      auto: true,
+      interval: 10
+    },
     accounts: {
       mnemonic: "crazy appear raise time fashion kind pattern crazy device split escape wolf",
-      count: 3,
+      count: 8,
     }
   },
   localhost: {
