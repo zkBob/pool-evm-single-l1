@@ -9,7 +9,7 @@ import "hardhat/console.sol";
 contract RoundRobin is IOperatorManagerRR, Ownable {
 
     uint32 constant BLOCKS_PER_SLOT = 100;
-    uint32 constant DELTA_BLOCKS_INITIAL_SLOT = 0;
+    uint32 constant DELTA_BLOCKS_INITIAL_SLOT = 500;
 
     // First block where the first slot begins
     uint public genesisBlock;
@@ -58,6 +58,10 @@ contract RoundRobin is IOperatorManagerRR, Ownable {
     	uint32 playSlot = currentSlot() + 1;
 
     	operatorDetails[msg.sender].claimSlot = playSlot;
+
+        lastClaimed = msg.sender;
+
+        console.log("[RR]: %s has been claimed for the slot %d", operatorDetails[msg.sender].name, playSlot);
     }
 
 
@@ -67,25 +71,36 @@ contract RoundRobin is IOperatorManagerRR, Ownable {
     	require(!isMaintenance, "Operator manager is under maintenance");
         require(operators.length > 0, "There are no certified relayers");
 
+        // [TEST-ONLY] uncomment 'require' statement in production
+        //require(block.number >= genesisBlock, "The auction has not started yet");
+        if (block.number < genesisBlock) {
+            return address(0);
+        }
+
         uint32 curSlot = currentSlot();
+
         uint32 startIdx = curSlot % uint32(operators.length);
         uint32 curIdx = startIdx;
         bool operatorNotFound = false;
         while (operatorDetails[operators[curIdx]].claimSlot < curSlot) {
-        	curIdx = (curIdx + 1) % uint32(operators.length);
-        	if (curIdx == startIdx) {
-        		// we have enumerate all of available operators
-    			// but no claimed operators were found
-    			operatorNotFound = true;
+            curIdx = (curIdx + 1) % uint32(operators.length);
+            if (curIdx == startIdx) {
+                // we have enumerate all of available operators
+                // but no claimed operators were found
+                operatorNotFound = true;
 
-    			break;
-        	}
+                break;
+            }
         }
 
         if (operatorNotFound) {
-        	return lastClaimed;
+            // [TEST-ONLY] uncomment 'require' statement in production
+            //require(operatorDetails[lastClaimed].initialized, "There are no active relayers");
+            //console.log("[RR]: select last claimed relayer %s", lastClaimed);
+            return lastClaimed;
         }
 
+        //console.log("[RR]: using operator %s (idx=%d) for the slot %d", operatorDetails[operators[curIdx]].name, curIdx, curSlot);
         return operators[curIdx];
     }
 
@@ -163,7 +178,7 @@ contract RoundRobin is IOperatorManagerRR, Ownable {
      */
     function block2slot(uint numBlock) public view returns (uint32) {
         if (numBlock < genesisBlock) return 0;
-        return uint32((numBlock - genesisBlock) / (BLOCKS_PER_SLOT));
+        return uint32(((numBlock - genesisBlock) / (BLOCKS_PER_SLOT)) + 1);
     }
 
     /**
