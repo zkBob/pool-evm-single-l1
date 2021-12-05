@@ -56,9 +56,9 @@ describe("Round-Robin Auction", async function() {
         await operatorManager.addOperator("REL-03", relayer3.address, "https://the.worst.relayer.com/");
         await operatorManager.setMaintenance(false);
 
-        claimPeriodic(operatorManager, relayer1, 1000, 10);
-        claimPeriodic(operatorManager, relayer2, 1000, 6);
-        claimPeriodic(operatorManager, relayer3, 1000, 2);
+        claimPeriodic(operatorManager, relayer1, 1000, 8);
+        claimPeriodic(operatorManager, relayer2, 1000, 16);
+        claimPeriodic(operatorManager, relayer3, 1000, 10);
 
         for (var i = 0; i < 32; i++) {
             //const [op, slot, block] = fetchState(operatorManager);

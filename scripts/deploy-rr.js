@@ -20,7 +20,7 @@ async function deploy_roundrobin() {
   );
   const TreeVerifier = await ethers.getContractFactory(
     process.env.MOCK_TREE_VERIFIER === "true" ?
-    "TreeVerifierMock" :
+    "TreeUpdateVerifierMock" :
     "TreeUpdateVerifier"
   );
 

@@ -14,6 +14,9 @@ contract RoundRobin is IOperatorManagerRR, Ownable {
     // First block where the first slot begins
     uint public genesisBlock;
 
+    // Current slot size
+    uint32 public blocksInSlot;
+
     bool public isMaintenance;
 
     // Holds the operator (relayer) details
@@ -36,6 +39,7 @@ contract RoundRobin is IOperatorManagerRR, Ownable {
     address lastClaimed;
 
     constructor() {
+        blocksInSlot = BLOCKS_PER_SLOT;
         genesisBlock = getBlockNumber() + DELTA_BLOCKS_INITIAL_SLOT;
         isMaintenance = false;
         lastClaimed = address(0);
@@ -79,7 +83,7 @@ contract RoundRobin is IOperatorManagerRR, Ownable {
 
         uint32 curSlot = currentSlot();
 
-        uint32 startIdx = curSlot % uint32(operators.length);
+        uint32 startIdx = (curSlot - 1) % uint32(operators.length);
         uint32 curIdx = startIdx;
         bool operatorNotFound = false;
         while (operatorDetails[operators[curIdx]].claimSlot < curSlot) {
@@ -128,7 +132,7 @@ contract RoundRobin is IOperatorManagerRR, Ownable {
     }
 
     function slotSize() external view override returns(uint32) {
-    	return BLOCKS_PER_SLOT;
+    	return blocksInSlot;
     }
 
     // --------========< Maintenance Routines >========--------
@@ -168,6 +172,12 @@ contract RoundRobin is IOperatorManagerRR, Ownable {
         }
     }
 
+    function setSlotSize(uint32 blocks) external onlyOwner {
+        require(isMaintenance, "Not in a maintenance mode");
+        require (blocks > 0, "Slot size must be greater than zero");
+
+        blocksInSlot = blocks;
+    }
 
     // --------========< Helper Routines >========--------
 
@@ -178,7 +188,7 @@ contract RoundRobin is IOperatorManagerRR, Ownable {
      */
     function block2slot(uint numBlock) public view returns (uint32) {
         if (numBlock < genesisBlock) return 0;
-        return uint32(((numBlock - genesisBlock) / (BLOCKS_PER_SLOT)) + 1);
+        return uint32(((numBlock - genesisBlock) / (blocksInSlot)) + 1);
     }
 
     /**
