@@ -39,7 +39,7 @@ async function claimPeriodic(manager, relayer, interval, count) {
     }
 }
 
-describe("Round-Robin Auction", async function() {
+describe("Round-Robin Operator Manager", async function() {
     it("Should deploy and check RoundRobin OperatorManager", async function () {
 
         const [,, relayer1, relayer2, relayer3] = await ethers.getSigners();

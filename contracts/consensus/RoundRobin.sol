@@ -44,7 +44,7 @@ contract RoundRobin is IOperatorManagerRR, Ownable {
         isMaintenance = false;
         lastClaimed = address(0);
 
-        console.log("RoundRobin contract has been created by %s", owner());
+        console.log("[RR]: contract has been created by %s", owner());
     }
 
 
