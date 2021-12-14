@@ -37,6 +37,7 @@ or try with the single one:
 
 ```
 npx hardhat test ./test/Pool.js
-npx hardhat test ./test/RoundRobin.js
 npx hardhat test ./test/Mutable.js
+npx hardhat test ./test/Semaphore.js
+npx hardhat test ./test/RoundRobin.js
 ```
