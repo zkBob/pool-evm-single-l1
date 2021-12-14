@@ -2,7 +2,7 @@
 pragma solidity ^0.8.10;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
-import "./IOperatorManagerRR.sol";
+import "./interfaces/IOperatorManagerRR.sol";
 
 import "hardhat/console.sol";
 
@@ -50,7 +50,7 @@ contract RoundRobin is IOperatorManagerRR, Ownable {
 
     // --------========< Claim Routine >========--------
     //  * Relayers declare they are ready to interact
-    //    with the pool contract
+    //    with the Pool contract
     //	* The claimed relayer is considered to be ready
     //    up to the next slot inclusively
     //  * The last claimed relayer will use as fallback
@@ -69,7 +69,11 @@ contract RoundRobin is IOperatorManagerRR, Ownable {
     }
 
 
-    // --------========< Get the Current Relayer >========--------
+    // --------========< Protocol Methods >========--------
+
+    function is_operator() external view override returns(bool) {
+        return (operator() == address(0) || operator() == tx.origin);
+    }
 
     function operator() public view override returns(address) {
     	require(!isMaintenance, "Operator manager is under maintenance");
@@ -124,12 +128,6 @@ contract RoundRobin is IOperatorManagerRR, Ownable {
         return operatorDetails[curOperator].name;
     }
 
-    function amIOperator() external view override returns(bool) {
-    	address curOperator = operator();
-        require(curOperator != address(0), "No assigned relayer at that time");
-
-        return (curOperator == msg.sender);
-    }
 
     function slotSize() external view override returns(uint32) {
     	return blocksInSlot;
@@ -181,28 +179,15 @@ contract RoundRobin is IOperatorManagerRR, Ownable {
 
     // --------========< Helper Routines >========--------
 
-    /**
-     * @dev Calculate slot from block number
-     * @param numBlock block number
-     * @return slot number
-     */
     function block2slot(uint numBlock) public view returns (uint32) {
         if (numBlock < genesisBlock) return 0;
         return uint32(((numBlock - genesisBlock) / (blocksInSlot)) + 1);
     }
 
-    /**
-     * @dev Retrieve current slot
-     * @return slot number
-     */
     function currentSlot() public view returns (uint32) {
         return block2slot(getBlockNumber());
     }
 
-    /**
-     * @dev Retrieve block number. THIS FUNCTION IS USEFULL FOR DEBUGGING PURPOSES
-     * @return current block number
-     */
     function getBlockNumber() public view virtual returns (uint) {
         return block.number;
     }

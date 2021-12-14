@@ -5,8 +5,9 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/proxy/utils/Initializable.sol";
 import "./Parameters.sol";
-import "./consensus/IOperatorManager.sol";
+import "./manager/interfaces/IOperatorManager.sol";
 
+//import "hardhat/console.sol";
 
 
 interface ITransferVerifier {
@@ -46,7 +47,7 @@ contract Pool is Parameters, Initializable {
 
 
     modifier onlyOperator() {
-        require(operatorManager.operator()==msg.sender);
+        require(operatorManager.is_operator(), "You are not an operator at this time");
         _;
     }
 
@@ -90,7 +91,7 @@ contract Pool is Parameters, Initializable {
         return pool_id;
     }
 
-    function transact() external payable returns(bool) {
+    function transact() external payable onlyOperator returns(bool) {
         // Transfer part
         require(transfer_verifier.verifyProof(_transfer_pub(), _transfer_proof()), "bad transfer proof"); 
         require(nullifiers[_transfer_nullifier()]==0,"doublespend detected");
@@ -126,12 +127,11 @@ contract Pool is Parameters, Initializable {
         } else revert("Incorrect transaction type");
 
         if (fee>0) {
-            token.safeTransfer(operatorManager.operator(), fee*denominator);
+            token.safeTransfer(msg.sender, fee*denominator);
         }
 
         // this data could be used to rescue burned funds
         nullifiers[_transfer_nullifier()] = (1<<255) | (uint64(_transfer_token_amount()) << 160) | (uint112(_transfer_energy_amount()) << 48) | _pool_index;
-
 
         // Tree part
         require(tree_verifier.verifyProof(_tree_pub(), _tree_proof()), "bad tree proof");

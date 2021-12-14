@@ -2,7 +2,7 @@
 // Modified from https://github.com/iden3/rollup/blob/master/contracts/RollupBurnAuction.sol
 pragma solidity ^0.8.10;
 
-import "./IOperatorManager.sol";
+import "./interfaces/IOperatorManager.sol";
 
 contract BurnAuction is IOperatorManager {
 
@@ -63,6 +63,11 @@ contract BurnAuction is IOperatorManager {
             msg.sender,
             uint128(msg.value)
         );
+    }
+
+    function is_operator() external view returns(bool) {
+        require(auction[currentSlot()].initialized, "Auction has not been initialized");
+        return (auction[currentSlot()].operator == tx.origin);
     }
 
     function operator() external view override returns(address) {

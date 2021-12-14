@@ -2,7 +2,7 @@
 pragma solidity ^0.8.10;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
-import "./IOperatorManagerRR.sol";
+import "./interfaces/IOperatorManagerRR.sol";
 
 import "hardhat/console.sol";
 
@@ -32,11 +32,18 @@ contract SemaphoreOperatorManager is IOperatorManager, Ownable {
         lastActiveOperator = address(0);
     }
 
-    // ---===< Common methods >===---
-    //
-    // These methods can be used by everyone
+    // ---===< Protocol Methods >===---
 
-    function operator() external view override returns(address) {
+    function is_operator() external view override returns(bool) {
+        uint slotEnd = lastSlotStartBlock + slotSize;
+        if (block.number > slotEnd) {
+            return true;
+        } else {
+            return lastActiveOperator == tx.origin;
+        }
+    }
+
+    function operator() external view returns(address) {
         uint slotEnd = lastSlotStartBlock + slotSize;
         if (block.number > slotEnd) {
             return address(0);
@@ -44,6 +51,11 @@ contract SemaphoreOperatorManager is IOperatorManager, Ownable {
             return lastActiveOperator;
         }
     }
+
+    // ---===< Common methods >===---
+    //
+    // These methods can be used by everyone
+    // To get the semaphore state and forecast
 
     function isLocked() external view returns(bool) {
         uint slotEnd = lastSlotStartBlock + slotSize;
@@ -115,6 +127,7 @@ contract SemaphoreOperatorManager is IOperatorManager, Ownable {
     //
     // These methods are using by RelayerDispatcher
     // to configure the OperatorManager
+    // The RelayerDispatcher should be the contract owner
 
     function addOperator(address addr) external onlyOwner {
         require(!approvedOperators[addr], "Operator already exist");

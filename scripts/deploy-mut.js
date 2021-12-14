@@ -51,7 +51,7 @@ async function deploy_mutable_om() {
       await prev();
       const token = await MintableToken.deploy("Token", "TOKEN", "0x0000000000000000000000000000000000000000", {nonce: nonce++});
       await token.deployed();
-      console.log(`Token deployed at ${token.address}`);
+      //console.log(`Token deployed at ${token.address}`);
     })(deploy_tokens);
 
 
@@ -69,7 +69,7 @@ async function deploy_mutable_om() {
       await prev();
       const voucherToken = await MintableToken.deploy("Voucher Token", "VOUCHER", poolAddress, {nonce: nonce++});
       await voucherToken.deployed();
-      console.log(`Voucher token deployed at ${voucherToken.address}`);
+      //console.log(`Voucher token deployed at ${voucherToken.address}`);
     })(deploy_tokens);
 
     voucherTokenAddress = getContractAddress({
@@ -88,7 +88,7 @@ async function deploy_mutable_om() {
 
   const zeroPoolProxy = await ZeroPoolProxy.deploy(poolAddress, proxyAdmin.address, "0x8129fc1c", {nonce: nonce++});
   await zeroPoolProxy.deployed();
-  console.log(`Pool proxy deployed at ${zeroPoolProxy.address}`);
+  //console.log(`Pool proxy deployed at ${zeroPoolProxy.address}`);
 
   await deploy_tokens();
 
@@ -96,10 +96,10 @@ async function deploy_mutable_om() {
   fs.writeFileSync('addresses.json', data);
 
   return {
-    //pool:new ethers.Contract(zeroPoolProxy.address, Pool.interface),
-    //Pool,
-    operatorManager: mutableOperatorManager,
-    MutableOperatorManager,
+    pool:new ethers.Contract(zeroPoolProxy.address, Pool.interface),
+    pool_c: Pool,
+    opMan: mutableOperatorManager,
+    opMan_c: MutableOperatorManager,
   };
 }
 
