@@ -8,19 +8,16 @@ import "hardhat/console.sol";
 
 contract MutableOperatorManager is IOperatorManager, Ownable {
 	address public op;
-	string public name;
     string public endpoint;
 
-    constructor(string memory _name, address _addr, string memory _endpoint) {
-    	name = _name;
+    constructor(address _addr, string memory _endpoint) {
         op = _addr;
         endpoint = _endpoint;
     }
 
     // --------========< Maintenance Routines >========--------
 
-    function setOperator(string memory _name, address _addr, string memory _endpoint) external onlyOwner {
-    	name = _name;
+    function setOperator(address _addr, string memory _endpoint) external onlyOwner {
         op = _addr;
         endpoint = _endpoint;
     }
@@ -41,10 +38,5 @@ contract MutableOperatorManager is IOperatorManager, Ownable {
     // Get the current relayer's URI
     function operatorURI() external view returns(string memory) {
         return (op != address(0) ? endpoint : "");
-    }
-
-    // Get the current relayer's name
-    function operatorName() external view returns(string memory) {
-        return (op != address(0) ? name : "");
     }
 }

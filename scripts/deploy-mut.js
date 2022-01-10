@@ -26,7 +26,7 @@ async function deploy_mutable_om() {
 
 
 
-  const mutableOperatorManager = await MutableOperatorManager.deploy("REL-01", relayer.address, "https://relayer.zkbob.com", {nonce: nonce++});
+  const mutableOperatorManager = await MutableOperatorManager.deploy(relayer.address, "https://relayer.zkbob.com", {nonce: nonce++});
   await mutableOperatorManager.deployed();
   console.log(`MutableOperatorManager deployed at ${mutableOperatorManager.address}`);
 

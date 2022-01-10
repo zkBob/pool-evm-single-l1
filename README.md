@@ -25,7 +25,7 @@ We use Hardhat to test contracts. To prepare your environment:
 ```
 git clone https://github.com/zkBob/pool-evm-single-l1
 cd pool-evm-single-l1
-npm install --save-dev hardhat
+npm install --save-dev hardhat@2.7.0
 ```
 Now you can check all available tests:
 

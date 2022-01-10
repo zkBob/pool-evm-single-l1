@@ -71,24 +71,21 @@ describe("Mutable Operator Manager", async function() {
 
     it("Should change initial relayer", async function () {
         const opUrl = await operatorManager.operatorURI();
-        const opName = await operatorManager.operatorName();
         const op = await operatorManager.operator();
-        console.log("Current operator: %s [%s  @ %s]", opName, op, opUrl);
+        console.log("Current operator: [%s  @ %s]", op, opUrl);
 
         console.log("Changing current operator...");
-        await operatorManager.connect(deployer).setOperator("REL-02", relayer2.address, "https://reserved.relayer.zkbob.com/");
+        await operatorManager.connect(deployer).setOperator(relayer2.address, "https://reserved.relayer.zkbob.com/");
 
         const opUrl2 = await operatorManager.operatorURI();
-        const opName2 = await operatorManager.operatorName();
         const op2 = await operatorManager.operator();
-        console.log("Current operator: %s [%s  @ %s]", opName2, op2, opUrl2);
+        console.log("Current operator: [%s  @ %s]", op2, opUrl2);
     });
 
     it("Should perform transactions from the valid relayers and revert from invalid", async function () {
         const opUrl = await operatorManager.operatorURI();
-        const opName = await operatorManager.operatorName();
         const op = await operatorManager.operator();
-        console.log("Current operator: %s [%s  @ %s]", opName, op, opUrl);
+        console.log("Current operator: [%s  @ %s]", op, opUrl);
 
         console.log("Sending tx from the REL-1 (should be performed)...");
         await relayer1.sendTransaction({
@@ -116,12 +113,11 @@ describe("Mutable Operator Manager", async function() {
         ).to.be.reverted;
 
         console.log("Changing current operator...");
-        await operatorManager.connect(deployer).setOperator("REL-02", relayer2.address, "https://reserved.relayer.zkbob.com/");
+        await operatorManager.connect(deployer).setOperator(relayer2.address, "https://reserved.relayer.zkbob.com/");
 
         const opUrl2 = await operatorManager.operatorURI();
-        const opName2 = await operatorManager.operatorName();
         const op2 = await operatorManager.operator();
-        console.log("Current operator: %s [%s  @ %s]", opName2, op2, opUrl2);
+        console.log("Current operator: [%s  @ %s]", op2, opUrl2);
 
         console.log("Sending tx from the REL-1 (should be reverted)...");
         await expect(
@@ -149,7 +145,7 @@ describe("Mutable Operator Manager", async function() {
         ).to.be.reverted;
 
         console.log("Unlock the Pool for everyone...");
-        await operatorManager.connect(deployer).setOperator("free", "0x0000000000000000000000000000000000000000", "");
+        await operatorManager.connect(deployer).setOperator("0x0000000000000000000000000000000000000000", "");
 
         console.log("Sending tx from the REL-1 (should be performed)...");
         await relayer1.sendTransaction({
