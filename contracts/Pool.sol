@@ -9,8 +9,9 @@ import "./interfaces/ITreeVerifier.sol";
 import "./interfaces/IMintable.sol";
 import "./Parameters.sol";
 import "./manager/interfaces/IOperatorManager.sol";
+import "./interfaces/IERC20Receiver.sol";
 
-contract Pool is Parameters, Initializable {
+contract Pool is Parameters, Initializable, IERC20Receiver {
     using SafeERC20 for IERC20;
 
     uint256 immutable public pool_id;
@@ -33,6 +34,7 @@ contract Pool is Parameters, Initializable {
         _;
     }
 
+    mapping (address => uint256) public bridge_deposits;
     mapping (uint256 => uint256) public nullifiers;
     mapping (uint256 => uint256) public roots;
     uint256 public pool_index;
@@ -101,9 +103,8 @@ contract Pool is Parameters, Initializable {
         if (_tx_type()==0) { // Deposit
             require(token_amount>=0 && energy_amount==0 && msg.value == 0, "incorrect deposit amounts");
             token.safeTransferFrom(_deposit_spender(), address(this), uint256(token_amount) * denominator);
-        } else if (_tx_type()==1) { // Transfer 
+        } else if (_tx_type()==1) { // Transfer
             require(token_amount==0 && energy_amount==0 && msg.value == 0, "incorrect transfer amounts");
-
         } else if (_tx_type()==2) { // Withdraw
             require(token_amount<=0 && energy_amount<=0 && msg.value == _memo_native_amount()*native_denominator, "incorrect withdraw amounts");
 
@@ -121,11 +122,31 @@ contract Pool is Parameters, Initializable {
                 require(success);
             }
 
+        } else if (_tx_type()==3) { // Bridge deposit
+            require(token_amount>=0 && energy_amount==0 && msg.value == 0, "incorrect deposit amounts");
+            require(bridge_deposits[_deposit_spender()] >= uint256(token_amount) * denominator, "not enough tokens for deposit");
+            bridge_deposits[_deposit_spender()] -= uint256(token_amount) * denominator;
         } else revert("Incorrect transaction type");
 
         if (fee>0) {
             token.safeTransfer(msg.sender, fee*denominator);
         }
+    }
+
+    function onTokenBridged(
+        address _token,
+        uint256 _value,
+        bytes calldata _data
+    ) external {
+        require(address(token) == _token, "token is not supproted");
+        address user = address(uint160(bytes20(_data)));
+        bridge_deposits[user] += _value;
+    }
+
+    function claimBridgeDeposit(uint256 value) external {
+        require(bridge_deposits[msg.sender] >= value, "not enough tokens to claim");
+        token.safeTransfer(msg.sender, value);
+        bridge_deposits[msg.sender] -= value;
     }
 }
 

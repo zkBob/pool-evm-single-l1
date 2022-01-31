@@ -121,7 +121,7 @@ contract CustomABIDecoder {
 
     function _memo_fixed_size() pure internal returns(uint256 r) {
         uint256 t = _tx_type();
-        if ( t ==0 || t == 1) {
+        if ( t ==0 || t == 1 || t == 3) {
             r = 8;
         } else if (t==2) { 
             r = 36;
