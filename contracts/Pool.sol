@@ -4,17 +4,19 @@ pragma solidity ^0.8.10;
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/proxy/utils/Initializable.sol";
+import "@openzeppelin/contracts/access/Ownable.sol";
 import "./interfaces/ITransferVerifier.sol";
 import "./interfaces/ITreeVerifier.sol";
 import "./interfaces/IMintable.sol";
 import "./Parameters.sol";
 import "./manager/interfaces/IOperatorManager.sol";
+import "./interfaces/IERC20Receiver.sol";
+import "./interfaces/IWXDAI.sol";
 
-contract Pool is Parameters, Initializable {
-    using SafeERC20 for IERC20;
+contract Pool is Parameters, Initializable, IERC20Receiver, Ownable {
+    using SafeERC20 for IWXDAI;
 
     uint256 immutable public pool_id;
-    IERC20 immutable public token;
     IMintable immutable public voucher_token;
     uint256 immutable public denominator;
     uint256 immutable public energy_denominator;
@@ -23,6 +25,8 @@ contract Pool is Parameters, Initializable {
     ITreeVerifier immutable public tree_verifier;
     IOperatorManager immutable public operatorManager;
     uint256 immutable internal first_root;
+    address immutable public bridge_address;
+    IWXDAI immutable public wxdai;
 
     uint256 constant internal MAX_POOL_ID = 0xffffff;
 
@@ -33,6 +37,7 @@ contract Pool is Parameters, Initializable {
         _;
     }
 
+    mapping (address => uint256) public bridge_deposits;
     mapping (uint256 => uint256) public nullifiers;
     mapping (uint256 => uint256) public roots;
     uint256 public pool_index;
@@ -40,10 +45,21 @@ contract Pool is Parameters, Initializable {
 
     
 
-    constructor(uint256 __pool_id, IERC20 _token, IMintable _voucher_token, uint256 _denominator, uint256 _energy_denominator, uint256 _native_denominator, 
-        ITransferVerifier _transfer_verifier, ITreeVerifier _tree_verifier, IOperatorManager _operatorManager, uint256 _first_root) {
+    constructor(
+        uint256 __pool_id,
+        IWXDAI _wxdai,
+        IMintable _voucher_token,
+        uint256 _denominator,
+        uint256 _energy_denominator,
+        uint256 _native_denominator,
+        ITransferVerifier _transfer_verifier,
+        ITreeVerifier _tree_verifier,
+        IOperatorManager _operatorManager,
+        uint256 _first_root,
+        address _bridge_address
+    ) {
         require(__pool_id <= MAX_POOL_ID);
-        token=_token;
+        wxdai=_wxdai;
         voucher_token=_voucher_token;
         denominator=_denominator;
         energy_denominator=_energy_denominator;
@@ -53,6 +69,7 @@ contract Pool is Parameters, Initializable {
         operatorManager=_operatorManager;
         first_root = _first_root;
         pool_id = __pool_id;
+        bridge_address = _bridge_address;
     }
 
     function initialize() public initializer{
@@ -100,15 +117,14 @@ contract Pool is Parameters, Initializable {
 
         if (_tx_type()==0) { // Deposit
             require(token_amount>=0 && energy_amount==0 && msg.value == 0, "incorrect deposit amounts");
-            token.safeTransferFrom(_deposit_spender(), address(this), uint256(token_amount) * denominator);
-        } else if (_tx_type()==1) { // Transfer 
+            wxdai.safeTransferFrom(_deposit_spender(), address(this), uint256(token_amount) * denominator);
+        } else if (_tx_type()==1) { // Transfer
             require(token_amount==0 && energy_amount==0 && msg.value == 0, "incorrect transfer amounts");
-
         } else if (_tx_type()==2) { // Withdraw
             require(token_amount<=0 && energy_amount<=0 && msg.value == _memo_native_amount()*native_denominator, "incorrect withdraw amounts");
 
             if (token_amount<0) {
-                token.safeTransfer(_memo_receiver(), uint256(-token_amount)*denominator);
+                wxdai.safeTransfer(_memo_receiver(), uint256(-token_amount)*denominator);
             }
 
             if (energy_amount<0) {
@@ -121,11 +137,36 @@ contract Pool is Parameters, Initializable {
                 require(success);
             }
 
+        } else if (_tx_type()==3) { // Bridge deposit
+            require(token_amount>=0 && energy_amount==0 && msg.value == 0, "incorrect deposit amounts");
+            require(bridge_deposits[_deposit_spender()] >= uint256(token_amount) * denominator, "not enough tokens for deposit");
+            bridge_deposits[_deposit_spender()] -= uint256(token_amount) * denominator;
         } else revert("Incorrect transaction type");
 
         if (fee>0) {
-            token.safeTransfer(msg.sender, fee*denominator);
+            wxdai.safeTransfer(msg.sender, fee*denominator);
         }
+    }
+
+    function onTokenBridged(
+        address _token,
+        uint256 _value,
+        bytes calldata _data
+    ) external {
+        require(address(wxdai) == _token, "token is not supproted");
+        wxdai.withdraw(_value);
+        address user = address(uint160(bytes20(_data)));
+        bridge_deposits[user] += _value;
+    }
+
+    function claimBridgeDeposit(uint256 value) external {
+        require(bridge_deposits[msg.sender] >= value, "not enough tokens to claim");
+        wxdai.safeTransfer(msg.sender, value);
+        bridge_deposits[msg.sender] -= value;
+    }
+
+    function swapXDAItoWXDAI(uint256 amount) external onlyOwner {
+        wxdai.deposit{value: amount}();
     }
 }
 
