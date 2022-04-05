@@ -11,7 +11,7 @@ async function deploy() {
   const Pool = await ethers.getContractFactory("Pool");
   const SimpleOperatorManager = await ethers.getContractFactory("SimpleOperatorManager");
   const MintableToken = await ethers.getContractFactory("MintableToken");
-  const WXDAIToken = await ethers.getContractFactory("WXDAI");
+  const PermittableToken = await ethers.getContractFactory("PermittableToken");
   const ZeroPoolProxy = await ethers.getContractFactory("ZeroPoolProxy");
 
   const TransferVerifier = await ethers.getContractFactory(
@@ -49,7 +49,7 @@ async function deploy() {
   } else {
     deploy_tokens = ((prev) => async () => {
       await prev();
-      token = await WXDAIToken.deploy({ nonce: nonce++ });
+      token = await PermittableToken.deploy("Token", "TOKEN", '0x0000000000000000000000000000000000000000', { nonce: nonce++ });
       await token.deployed();
       console.log(`Token deployed at ${token.address}`);
     })(deploy_tokens);
@@ -81,7 +81,7 @@ async function deploy() {
   const denominator = "1000000000";
   const initialRoot = "11469701942666298368112882412133877458305516134926649826543144744382391691533";
   const pool = await Pool.deploy(poolId, tokenAddress, voucherTokenAddress, denominator, denominator, denominator,
-    transferVerifier.address, treeVerifier.address, simpleOperatorManager.address, initialRoot, deployer.address, { nonce: nonce++ });
+    transferVerifier.address, treeVerifier.address, simpleOperatorManager.address, initialRoot, { nonce: nonce++ });
 
   await pool.deployed();
   console.log(`Pool implementation deployed at ${pool.address}`);
