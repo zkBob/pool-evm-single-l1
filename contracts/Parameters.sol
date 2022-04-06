@@ -28,7 +28,7 @@ abstract contract Parameters is CustomABIDecoder {
         r[2] = _transfer_out_commit();
     }
 
-    
+    // NOTE only valid in the context of normal deposit (tx_type=0)
     function _deposit_spender() pure internal returns (address) {
         uint8 v;
         (bytes32 r, bytes32 s) = _sign_r_vs();
@@ -42,4 +42,16 @@ abstract contract Parameters is CustomABIDecoder {
         return ecrecover(prefixedHash, v, r, s);
     }
 
+    // NOTE only valid in the context of permittable token deposit (tx_type=3)
+    function _permittable_deposit_signature() pure internal returns (uint8, bytes32, bytes32) {
+        uint8 v;
+        (bytes32 r, bytes32 s) = _sign_r_vs();
+        v = 27 + uint8(uint256(s)>>255);
+        s = s & S_MASK;
+        require(
+            uint256(s) <= S_MAX,
+            "ECDSA: invalid signature 's' value"
+        );
+        return (v, r, s);
+    }
 }

@@ -121,9 +121,17 @@ contract CustomABIDecoder {
 
     function _memo_fixed_size() pure internal returns(uint256 r) {
         uint256 t = _tx_type();
-        if ( t ==0 || t == 1 || t == 3) {
+        if ( t == 0 || t == 1) {
+            // fee
+            // 8
             r = 8;
-        } else if (t==2) { 
+        } else if (t == 2) {
+            // fee + recipient + native amount
+            // 8 + 20 + 8
+            r = 36;
+        } else if (t == 3) {
+            // fee + deadline + address
+            // 8 + 8 + 20
             r = 36;
         } else revert(); 
     }
@@ -146,6 +154,8 @@ contract CustomABIDecoder {
         r = _loaduint256(memo_fee_pos+memo_fee_size-uint256_size) & memo_fee_mask;
     }
 
+    // Withdraw specific data
+
     uint256 constant memo_native_amount_pos = memo_fee_pos + memo_fee_size;
     uint256 constant memo_native_amount_size = 8;
     uint256 constant memo_native_amount_mask = (1<<(memo_native_amount_size*8))-1;
@@ -161,4 +171,19 @@ contract CustomABIDecoder {
         r = address(uint160(_loaduint256(memo_receiver_pos+memo_receiver_size-uint256_size)));
     }
 
+    // Peermittable token deposit specific data
+
+    uint256 constant memo_permit_deadline_pos = memo_fee_pos + memo_fee_size;
+    uint256 constant memo_permit_deadline_size = 8;
+
+    function _memo_permit_deadline() pure internal returns(uint64 r) {
+        r = uint64(_loaduint256(memo_permit_deadline_pos+memo_permit_deadline_size-uint256_size));
+    }
+
+    uint256 constant memo_permit_holder_pos = memo_permit_deadline_pos + memo_permit_deadline_size;
+    uint256 constant memo_permit_holder_size = 20;
+
+    function _memo_permit_holder() pure internal returns(address r) {
+        r = address(uint160(_loaduint256(memo_permit_holder_pos+memo_permit_holder_size-uint256_size)));
+    }
 }
