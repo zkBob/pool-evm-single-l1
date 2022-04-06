@@ -1,0 +1,6 @@
+**/node_modules/
+artifacts
+**/.git
+**/.env*
+cache
+test
