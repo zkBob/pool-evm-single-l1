@@ -69,7 +69,7 @@ contract PermittableToken is MintableToken {
         _approve(_holder, _spender, amount);
     }
 
-    /** @dev Allows to spend holder's unlimited amount by the specified spender according to EIP2612.
+    /** @dev Allows to spend holder's specified amount by the specified spender according to EIP2612.
      * The function can be called by anyone, but requires having allowance parameters
      * signed by the holder according to EIP712.
      * @param _holder The holder's address.
