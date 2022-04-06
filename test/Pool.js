@@ -94,19 +94,25 @@ describe("Pool", async function () {
     });
 
     it("Should perform transaction", async function () {
+        const feeValue = 1;
+
+        const denominatorNum = parseInt(denominator);
+        await token.mint(pool.address, feeValue * denominatorNum);  // put some tokens to the Pool (fee for relayer)
+
         // inputs sample data
         const selector = Pool.interface.getSighash("transact");
         const sample_nullifier = rand_fr_hex();
         const sample_out_commit = rand_fr_hex();
         const sample_transfer_index = "000000000000";
         const sample_enery_amount = "0000000000000000000000000000";
-        const sample_token_amount = "0000000000000000";
+        //const sample_token_amount = "0000000000000000";
+        const sample_token_amount = "ffffffffffffffff";
         const sample_transact_proof = rand_fr_hex_list(8);
         const sample_root_after = rand_fr_hex();
         const sample_tree_proof = rand_fr_hex_list(8);
         const sample_tx_type = "0001"; // deposit
         const sample_memo_size = "0030"; // memo block size
-        const sample_memo_fee = "0000000000000000"; // here is smart contract level metadata, only fee for 01 type
+        const sample_memo_fee = "0000000000000001";
         const sample_memo_message = rand_bigint_hex(parseInt(sample_memo_size, 16) - sample_memo_fee.length / 2); //here is encrypted tx metadata, used on client only
 
         data = [
@@ -122,12 +128,16 @@ describe("Pool", async function () {
             to: pool.address,
             data
         });
+
+        const relayerBalance = await token.balanceOf(relayer.address);
+        expect(relayerBalance).to.eq(feeValue * denominator);
     });
 
     it("Should allow permittable token deposit", async function () {
         const depositValue = 3;
+        const feeValue = 1;
         const denominatorNum = parseInt(denominator);
-        await token.mint(user.address, depositValue * denominatorNum);
+        await token.mint(user.address, (depositValue + feeValue) * denominatorNum);
 
         const selector = Pool.interface.getSighash("transact");
         const sample_nullifier = rand_fr_hex();
@@ -140,7 +150,7 @@ describe("Pool", async function () {
         const sample_tree_proof = rand_fr_hex_list(8);
         const sample_tx_type = "0003"; // deposit permittable tokens
         const sample_memo_size = "0050"; // memo block size
-        const sample_memo_fee = "0000000000000000"; // here is smart contract level metadata, only fee for 01 type
+        const sample_memo_fee = "0000000000000001";
 
         const deposit_deadline = (await lastBlockTimestamp(user)) + 60;
         const hex_deposit_deadline = ethers.utils.hexValue(deposit_deadline);
@@ -157,7 +167,7 @@ describe("Pool", async function () {
             user,
             token.address,
             pool.address,
-            depositValue * denominatorNum,
+            (depositValue + feeValue) * denominatorNum,
             0,
             deposit_deadline
         );
@@ -180,5 +190,8 @@ describe("Pool", async function () {
 
         const poolBalance = await token.balanceOf(pool.address);
         expect(poolBalance).to.eq(depositValue * denominator);
+
+        const relayerBalance = await token.balanceOf(relayer.address);
+        expect(relayerBalance).to.eq(feeValue * denominator);
     });
 });
