@@ -18,4 +18,5 @@ RUN npx hardhat compile
 ENV MOCK_TREE_VERIFIER=false
 ENV MOCK_TX_VERIFIER=false
 
-CMD npx hardhat run --network docker scripts/deploy-task.js
+ENV NETWORK=${NETWORK:-docker_ganache}
+CMD npx hardhat run --network $NETWORK scripts/deploy-task.js

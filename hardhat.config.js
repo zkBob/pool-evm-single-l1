@@ -35,9 +35,12 @@ const localDevnets = {
   localhost: {
     url: 'http://127.0.0.1:8545/'
   },
-  docker: {
+  docker_ganache: {
     url: "http://ganache:8545",
-  }
+  },
+  docker_anvil: {
+    url: "http://anvil:8545",
+  },
 };
 
 
