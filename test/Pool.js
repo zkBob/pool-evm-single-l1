@@ -41,7 +41,7 @@ async function lastBlockTimestamp(signer) {
     return (await signer.provider.getBlock(blockNumber)).timestamp;
 }
 
-async function permitSignature(user, tokenAddress, poolAddress, value, nonce, deadline) {
+async function saltedPermitSignature(user, tokenAddress, poolAddress, value, nonce, deadline, salt) {
     const domain = {
         name: 'Token',
         version: '1',
@@ -55,7 +55,8 @@ async function permitSignature(user, tokenAddress, poolAddress, value, nonce, de
             { name: "spender", type: "address" },
             { name: "value", type: "uint256" },
             { name: "nonce", type: "uint256" },
-            { name: "deadline", type: "uint256" }
+            { name: "deadline", type: "uint256" },
+            { name: "salt", type: "bytes32" }
         ],
     };
 
@@ -65,6 +66,7 @@ async function permitSignature(user, tokenAddress, poolAddress, value, nonce, de
         value,
         nonce,
         deadline,
+        salt,
     };
 
 
@@ -163,13 +165,14 @@ describe("Pool", async function () {
             - sample_permit_deposit_deadline.length / 2
             - sample_permit_holder.length / 2
         ); //here is encrypted tx metadata, used on client only
-        const sample_deposit_sig = await permitSignature(
+        const sample_deposit_sig = await saltedPermitSignature(
             user,
             token.address,
             pool.address,
             (depositValue + feeValue) * denominatorNum,
             0,
-            deposit_deadline
+            deposit_deadline,
+            '0x' + sample_nullifier
         );
 
         data = [

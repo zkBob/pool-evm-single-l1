@@ -40,7 +40,7 @@ contract Pool is Parameters, Initializable, Ownable {
     uint256 public pool_index;
     bytes32 public all_messages_hash;
 
-    
+
 
     constructor(
         uint256 __pool_id,
@@ -86,15 +86,16 @@ contract Pool is Parameters, Initializable, Ownable {
     }
 
     function transact() external payable onlyOperator {
+        uint256 nullifier = _transfer_nullifier();
         {
             uint256 _pool_index = pool_index;
 
-            require(transfer_verifier.verifyProof(_transfer_pub(), _transfer_proof()), "bad transfer proof"); 
-            require(nullifiers[_transfer_nullifier()]==0,"doublespend detected");
+            require(transfer_verifier.verifyProof(_transfer_pub(), _transfer_proof()), "bad transfer proof");
+            require(nullifiers[nullifier]==0,"doublespend detected");
             require(_transfer_index() <= _pool_index, "transfer index out of bounds");
             require(tree_verifier.verifyProof(_tree_pub(), _tree_proof()), "bad tree proof");
 
-            nullifiers[_transfer_nullifier()] = uint256(keccak256(abi.encodePacked(_transfer_out_commit(), _transfer_delta())));
+            nullifiers[nullifier] = uint256(keccak256(abi.encodePacked(_transfer_out_commit(), _transfer_delta())));
             _pool_index +=128;
             roots[_pool_index] = _tree_root_after();
             pool_index = _pool_index;
@@ -136,16 +137,15 @@ contract Pool is Parameters, Initializable, Ownable {
             require(token_amount>=0 && energy_amount==0 && msg.value == 0, "incorrect deposit amounts");
             (uint8 v, bytes32 r, bytes32 s) = _permittable_deposit_signature();
             address holder = _memo_permit_holder();
-            token.permit(
+            token.receiveWithSaltedPermit(
                 holder,
-                address(this),
                 uint256(token_amount) * denominator,
                 _memo_permit_deadline(),
+                bytes32(nullifier),
                 v,
                 r,
                 s
             );
-            token.safeTransferFrom(holder, address(this), uint256(token_amount) * denominator);
         } else revert("Incorrect transaction type");
 
         if (fee>0) {
