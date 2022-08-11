@@ -1,7 +1,8 @@
 
 const { ethers } = require('hardhat');
 async function print_params() {
-
+  const [deployer, proxyAdmin, relayer] = await ethers.getSigners();
+  let nonce = await deployer.getTransactionCount();
   const poolFactory = await ethers.getContractFactory("Pool");
   const oldPool = poolFactory.attach("0xC89Ce4735882C9F0f0FE26686c53074E09B0D550")
   const operatorManager = await oldPool.operatorManager()
@@ -17,9 +18,9 @@ async function print_params() {
 
   const TreeUpdateVerifierFactory = await ethers.getContractFactory("TreeUpdateVerifier");
 
-  const treeUpdateVerifier = await TreeUpdateVerifierFactory.deploy("TreeUpdateVerifier")
+  const treeUpdateVerifier = await TreeUpdateVerifierFactory.deploy()
 
-  const upgraded = await Pool.deploy(poolId,
+  const upgraded = await poolFactory.deploy(poolId,
     token.address,
     voucherToken.address,
     denominator,  //_denominator
