@@ -35,7 +35,7 @@ async function print_params() {
     treeUpdateVerifier.address,
     operatorManager,
     initialRoot,
-    { nonce: nonce++ });
+    { nonce: nonce+3 });
 
     console.log("upgraded = ", upgraded)
 
