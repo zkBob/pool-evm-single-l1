@@ -4,13 +4,18 @@ async function print_params() {
   const [deployer, proxyAdmin, relayer] = await ethers.getSigners();
   let nonce = await deployer.getTransactionCount();
   const poolFactory = await ethers.getContractFactory("Pool");
-  const oldPool = poolFactory.attach("0xC89Ce4735882C9F0f0FE26686c53074E09B0D550")
+  let oldPool = poolFactory.attach("0xC89Ce4735882C9F0f0FE26686c53074E09B0D550")
   const operatorManager = await oldPool.operatorManager()
   console.log("operatorManager", operatorManager)
   const voucherToken = await oldPool.voucher_token()
-  
-  const poolId = await oldPool.pool_id()
-  console.log("poolId", poolId);
+
+  // let poolId = await oldPool.pool_id()
+
+  // !!!!!! Temporary  !!!!!
+  const  poolId = nonce
+  console.log("pool id will be: ", poolId);
+  /////
+
   const denominator = await oldPool.denominator()
 
   const token = await oldPool.token()
@@ -24,8 +29,8 @@ async function print_params() {
 
   const treeUpdateVerifier = await TreeUpdateVerifierFactory.deploy()
 
-  
-  const upgraded = await poolFactory.deploy(poolId,
+
+  const upgradedPool = await poolFactory.deploy(poolId,
     token,
     voucherToken,
     denominator,  //_denominator
@@ -35,9 +40,17 @@ async function print_params() {
     treeUpdateVerifier.address,
     operatorManager,
     initialRoot,
-    { nonce: nonce+3 });
+    { nonce: nonce + 2 });
 
-    console.log("upgraded = ", upgraded)
+  console.log("upgradedPool = ", upgradedPool.address)
+
+  const ZeroPoolProxy = await ethers.getContractFactory("ZeroPoolProxy");
+
+  const proxy = ZeroPoolProxy.attach("0xC89Ce4735882C9F0f0FE26686c53074E09B0D550")
+
+  await proxy.connect(proxyAdmin).upgradeTo(upgradedPool.address)
+
+  console.log("new pool id ", await oldPool.connect(deployer).poolId())
 
 }
 
