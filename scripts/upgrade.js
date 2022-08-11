@@ -6,9 +6,13 @@ async function print_params() {
   const poolFactory = await ethers.getContractFactory("Pool");
   const oldPool = poolFactory.attach("0xC89Ce4735882C9F0f0FE26686c53074E09B0D550")
   const operatorManager = await oldPool.operatorManager()
+  console.log("operatorManager", operatorManager)
   const voucherToken = await oldPool.voucher_token()
+  
   const poolId = await oldPool.pool_id()
+  console.log("poolId", poolId);
   const denominator = await oldPool.denominator()
+
   const token = await oldPool.token()
 
   const initialRoot = "11469701942666298368112882412133877458305516134926649826543144744382391691533";
@@ -20,15 +24,16 @@ async function print_params() {
 
   const treeUpdateVerifier = await TreeUpdateVerifierFactory.deploy()
 
+  
   const upgraded = await poolFactory.deploy(poolId,
-    token.address,
-    voucherToken.address,
+    token,
+    voucherToken,
     denominator,  //_denominator
     denominator, //_energy_denominator
     denominator,//_native_denominator
     transferVerifier.address,
     treeUpdateVerifier.address,
-    operatorManager.address,
+    operatorManager,
     initialRoot,
     { nonce: nonce++ });
 
