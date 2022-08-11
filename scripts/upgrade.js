@@ -50,7 +50,8 @@ async function print_params() {
 
   await proxy.connect(proxyAdmin).upgradeTo(upgradedPool.address)
 
-  console.log("new pool id ", await oldPool.connect(deployer).poolId())
+  const newPoolId = await oldPool.connect(deployer).pool_id()
+  console.log("new pool id ", newPoolId.toString())
 
 }
 
