@@ -15,7 +15,7 @@ async function print_params() {
 
   const transferVerifier = await TransferVerifierFactory.deploy()
 
-  const TreeUpdateVerifierFactory = await ethers.getContractFactory("TreeVerifier");
+  const TreeUpdateVerifierFactory = await ethers.getContractFactory("TreeUpdateVerifier");
 
   const treeUpdateVerifier = await TreeUpdateVerifierFactory.deploy("TreeUpdateVerifier")
 
