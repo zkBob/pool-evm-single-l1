@@ -37,6 +37,8 @@ contract Pool is Parameters, Initializable, Ownable {
 
     mapping (uint256 => uint256) public nullifiers;
     mapping (uint256 => uint256) public roots;
+    mapping (uint256 => mapping (address => int256)) public limits;
+    int256 public daily_quota;
     uint256 public pool_index;
     bytes32 public all_messages_hash;
 
@@ -52,7 +54,8 @@ contract Pool is Parameters, Initializable, Ownable {
         ITransferVerifier _transfer_verifier,
         ITreeVerifier _tree_verifier,
         IOperatorManager _operatorManager,
-        uint256 _first_root
+        uint256 _first_root,
+        int256 _daily_quota
     ) {
         require(__pool_id <= MAX_POOL_ID);
         token=_token;
@@ -65,6 +68,8 @@ contract Pool is Parameters, Initializable, Ownable {
         operatorManager=_operatorManager;
         first_root = _first_root;
         pool_id = __pool_id;
+        daily_quota= _daily_quota;
+
     }
 
     function initialize() public initializer{
@@ -86,7 +91,10 @@ contract Pool is Parameters, Initializable, Ownable {
     }
 
     function transact() external payable onlyOperator {
+        
         uint256 nullifier = _transfer_nullifier();
+        uint256 today = block.timestamp % 86400;
+        int256 limit_left = limits[today][msg.sender];
         {
             uint256 _pool_index = pool_index;
 
@@ -111,6 +119,14 @@ contract Pool is Parameters, Initializable, Ownable {
         int256 token_amount = _transfer_token_amount() + int256(fee);
         int256 energy_amount = _transfer_energy_amount();
 
+        
+        if (limit_left == 0 ) { //We haven't done any transaction today
+           
+            limit_left == daily_quota;
+        }
+        require(token_amount <= limit_left, "transaction amount exceeds daily quota");
+ 
+        
         if (_tx_type()==0) { // Deposit
             require(token_amount>=0 && energy_amount==0 && msg.value == 0, "incorrect deposit amounts");
             token.safeTransferFrom(_deposit_spender(), address(this), uint256(token_amount) * denominator);
@@ -150,6 +166,11 @@ contract Pool is Parameters, Initializable, Ownable {
 
         if (fee>0) {
             token.safeTransfer(msg.sender, fee*denominator);
+        }
+        if (token_amount == daily_quota) { // We're trying to spend all of the limit in a single transaction
+            limits[today][msg.sender] = -1; // Differentiate this case from default
+        } else {
+            limits[today][msg.sender] = limit_left - token_amount; 
         }
     }
 }
