@@ -79,7 +79,7 @@ async function deploy() {
   }
 
   const denominator = "1000000000";
-  const limit = "2000000000";
+  const limit = "2000000000000000000";
   const initialRoot = "11469701942666298368112882412133877458305516134926649826543144744382391691533";
   const pool = await Pool.deploy(
     poolId,
@@ -92,12 +92,15 @@ async function deploy() {
     treeVerifier.address,
     simpleOperatorManager.address,
     initialRoot,
+    limit,
     { nonce: nonce++ },
-    limit
     );
 
   await pool.deployed();
   console.log(`Pool implementation deployed at ${pool.address}`);
+
+  let daily_quota = await pool.daily_quota();
+  console.log('daily quota', daily_quota);
   poolAddress = pool.address;
 
   const zeroPoolProxy = await ZeroPoolProxy.deploy(poolAddress, proxyAdmin.address, "0x8129fc1c", { nonce: nonce++ });

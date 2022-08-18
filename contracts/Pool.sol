@@ -12,6 +12,9 @@ import "./Parameters.sol";
 import "./manager/interfaces/IOperatorManager.sol";
 import "./interfaces/IPermittableToken.sol";
 
+
+import "hardhat/console.sol";
+
 contract Pool is Parameters, Initializable, Ownable {
     using SafeERC20 for IPermittableToken;
 
@@ -95,6 +98,16 @@ contract Pool is Parameters, Initializable, Ownable {
         uint256 nullifier = _transfer_nullifier();
         uint256 today = block.timestamp % 86400;
         int256 limit_left = limits[today][msg.sender];
+        console.log("today",today);
+        console.log("limit_left",uint(limit_left));
+        console.log("daily quota", uint(daily_quota));
+        console.log("limit_left == 0", limit_left == 0);
+        if (limit_left == 0 ) { //We haven't done any transaction today
+           console.log("here");
+            limit_left == daily_quota;
+        }
+
+
         {
             uint256 _pool_index = pool_index;
 
@@ -119,11 +132,7 @@ contract Pool is Parameters, Initializable, Ownable {
         int256 token_amount = _transfer_token_amount() + int256(fee);
         int256 energy_amount = _transfer_energy_amount();
 
-        
-        if (limit_left == 0 ) { //We haven't done any transaction today
-           
-            limit_left == daily_quota;
-        }
+        console.log("token_amount", uint(token_amount));
         require(token_amount <= limit_left, "transaction amount exceeds daily quota");
  
         
