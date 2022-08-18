@@ -79,7 +79,7 @@ async function deploy() {
   }
 
   const denominator = "1000000000";
-  const limit = "2000000000000000000";
+  const limit = "2000000000000000000000000";
   const initialRoot = "11469701942666298368112882412133877458305516134926649826543144744382391691533";
   const pool = await Pool.deploy(
     poolId,

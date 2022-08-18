@@ -41,7 +41,7 @@ contract Pool is Parameters, Initializable, Ownable {
     mapping (uint256 => uint256) public nullifiers;
     mapping (uint256 => uint256) public roots;
     mapping (uint256 => mapping (address => int256)) public limits;
-    int256 public daily_quota;
+    int256 immutable public  daily_quota;
     uint256 public pool_index;
     bytes32 public all_messages_hash;
 
@@ -96,7 +96,7 @@ contract Pool is Parameters, Initializable, Ownable {
     function transact() external payable onlyOperator {
         
         uint256 nullifier = _transfer_nullifier();
-        uint256 today = block.timestamp % 86400;
+        uint256 today = block.timestamp / 86400;
         int256 limit_left = limits[today][msg.sender];
         console.log("today",today);
         console.log("limit_left",uint(limit_left));
@@ -104,8 +104,9 @@ contract Pool is Parameters, Initializable, Ownable {
         console.log("limit_left == 0", limit_left == 0);
         if (limit_left == 0 ) { //We haven't done any transaction today
            console.log("here");
-            limit_left == daily_quota;
+            limit_left = daily_quota;
         }
+        console.log("updated limit_left", uint(limit_left));
 
 
         {
@@ -132,6 +133,7 @@ contract Pool is Parameters, Initializable, Ownable {
         int256 token_amount = _transfer_token_amount() + int256(fee);
         int256 energy_amount = _transfer_energy_amount();
 
+        console.log("token_amount <= limit_left",token_amount <= limit_left);
         console.log("token_amount", uint(token_amount));
         require(token_amount <= limit_left, "transaction amount exceeds daily quota");
  
